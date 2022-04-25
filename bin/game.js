@@ -4,13 +4,14 @@ const app = new Application({
     height: 500,
     transparency: false,
     width: 500,
-    antialias: true
+    antialias: true,
+    resizeTo: window,
 });
 
 app.renderer.backgroundColor = 0x000000;
 const size = {
-    width: 500,
-    height: 500,
+    width: window.innerWidth,
+    height: window.innerHeight,
 }
 
 app.renderer.resize(size.width, size.height);
@@ -23,7 +24,7 @@ let dots = []
 
 console.log(app.stage);
 app.stage.sortableChildren = true
-function addConnection(dot) {
+function addConnection(dot, color) {
 
     let connectionMode = false
     let connectionLine = new PIXI.Graphics()
@@ -32,27 +33,51 @@ function addConnection(dot) {
     connectionLine.enableSort = true
     app.stage.addChild(connectionLine)
 
-    function checkConnection(data, otherDots) {
-
+    function checkConnection(touchPosition, otherDots) {
+        for (let i = 0; i < otherDots.length; i++) {
+            const otherDot = otherDots[i];
+            console.log(otherDot);
+            const otherDotCircle = new PIXI.Circle(otherDot.sprite.x, otherDot.sprite.y, otherDot.sprite.width)
+            if (otherDotCircle.contains(touchPosition.x, touchPosition.y)) {
+                return true
+            }
+        }
+        return false
     }
 
     function onDragStart(e) {
         connectionMode = true
         console.log("onDragStart", e);
-    }
-
-    function onDragEnd(e) {
-        connectionMode = false
-        connectionLine.clear()
+        dot.sprite.tint = 0xFFFFFF
     }
 
     function onDragMove(e) {
         if (connectionMode === false) return
         const newPosition = e.data.getLocalPosition(app.stage)
         connectionLine.clear()
-        connectionLine.lineStyle(2, 0xFFFFFF)
+        connectionLine.lineStyle(3, color)
             .moveTo(dot.sprite.x, dot.sprite.y)
             .lineTo(newPosition.x, newPosition.y)
+            .beginFill(0xFFFFFF)
+            .drawCircle(newPosition.x, newPosition.y, 5)
+            .endFill()
+    }
+
+    function onDragEnd(e) {
+        dot.sprite.tint = 0x0fFFFFFF
+        if (connectionMode === false) return
+        connectionMode = false
+        const touchEnded = e.data.getLocalPosition(app.stage)
+        const otherDotsFilter = dots.filter(other => {
+            return !(other.sprite.x === dot.sprite.x && other.sprite.y === dot.sprite.y)
+        })
+        console.log(otherDotsFilter);
+        if (checkConnection(touchEnded, otherDotsFilter)) {
+            // do something here
+            console.log("connected");
+        } else {
+            connectionLine.clear()
+        }
     }
 
     dot.sprite.on('pointerdown', onDragStart)
@@ -100,17 +125,17 @@ const dotsMeta = {
         position: { x: dotRadius + margin, y: size.height - dotRadius - margin }
     },
 }
-console.log("cenas");
 
 for (const [key, value] of Object.entries(dotsMeta)) {
     const dotMeta = value;
+    const color = dotMeta.color
     console.log(dotMeta);
-    var dot = createDot(dotMeta.color, dotMeta.radius);
+    var dot = createDot(color, dotMeta.radius);
     dot.sprite.x = dotMeta.position.x
     dot.sprite.y = dotMeta.position.y
     console.log("dot.sprite", dot.sprite);
     app.stage.addChild(dot.sprite)
-    addConnection(dot)
+    addConnection(dot, color)
     dots.push(dot)
 }
 
