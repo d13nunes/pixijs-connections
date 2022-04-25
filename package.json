@@ -1,0 +1,25 @@
+{
+  "name": "pixi-connections",
+  "version": "0.1.0",
+  "description": "Connect the dots game",
+  "main": "bin/game.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/d13nunes/pixijs-connections.git"
+  },
+  "keywords": [
+    "pixijs",
+    "dots",
+    "html5game",
+    "connections"
+  ],
+  "author": "Diogo Nunes",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/d13nunes/pixijs-connections/issues"
+  },
+  "homepage": "https://github.com/d13nunes/pixijs-connections#readme"
+}
