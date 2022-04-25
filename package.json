@@ -21,5 +21,8 @@
   "bugs": {
     "url": "https://github.com/d13nunes/pixijs-connections/issues"
   },
-  "homepage": "https://github.com/d13nunes/pixijs-connections#readme"
+  "homepage": "https://github.com/d13nunes/pixijs-connections#readme",
+  "dependencies": {
+    "pixi.js": "^6.3.0"
+  }
 }
