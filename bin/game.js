@@ -1,18 +1,18 @@
 const Application = PIXI.Application;
-
+const size = {
+    width: window.innerWidth,
+    height: window.innerHeight,
+}
 const app = new Application({
-    height: 500,
+    height: size.width,
     transparency: false,
-    width: 500,
+    width: size.height,
     antialias: true,
     resizeTo: window,
 });
 
 app.renderer.backgroundColor = 0x000000;
-const size = {
-    width: window.innerWidth,
-    height: window.innerHeight,
-}
+
 
 app.renderer.resize(size.width, size.height);
 
@@ -22,10 +22,8 @@ document.body.appendChild(app.view);
 
 let dots = []
 
-console.log(app.stage);
 app.stage.sortableChildren = true
 function addConnection(dot, color) {
-
     let connectionMode = false
     let connectionLine = new PIXI.Graphics()
     connectionLine.zIndex = 2
@@ -36,8 +34,7 @@ function addConnection(dot, color) {
     function checkConnection(touchPosition, otherDots) {
         for (let i = 0; i < otherDots.length; i++) {
             const otherDot = otherDots[i];
-            console.log(otherDot);
-            const otherDotCircle = new PIXI.Circle(otherDot.sprite.x, otherDot.sprite.y, otherDot.sprite.width)
+            const otherDotCircle = new PIXI.Circle(otherDot.x, otherDot.y, otherDot.width)
             if (otherDotCircle.contains(touchPosition.x, touchPosition.y)) {
                 return true
             }
@@ -48,15 +45,18 @@ function addConnection(dot, color) {
     function onDragStart(e) {
         connectionMode = true
         console.log("onDragStart", e);
-        dot.sprite.tint = 0xFFFFFF
     }
 
     function onDragMove(e) {
         if (connectionMode === false) return
         const newPosition = e.data.getLocalPosition(app.stage)
         connectionLine.clear()
+        dotCenter = {
+            x: dot.x + dot.width / 2,
+            y: dot.y + dot.height / 2,
+        }
         connectionLine.lineStyle(3, color)
-            .moveTo(dot.sprite.x, dot.sprite.y)
+            .moveTo(dotCenter.x, dotCenter.y)
             .lineTo(newPosition.x, newPosition.y)
             .beginFill(0xFFFFFF)
             .drawCircle(newPosition.x, newPosition.y, 5)
@@ -64,14 +64,10 @@ function addConnection(dot, color) {
     }
 
     function onDragEnd(e) {
-        dot.sprite.tint = 0x0fFFFFFF
         if (connectionMode === false) return
         connectionMode = false
         const touchEnded = e.data.getLocalPosition(app.stage)
-        const otherDotsFilter = dots.filter(other => {
-            return !(other.sprite.x === dot.sprite.x && other.sprite.y === dot.sprite.y)
-        })
-        console.log(otherDotsFilter);
+        const otherDotsFilter = dots.filter(other => !(other.id === dot.id))
         if (checkConnection(touchEnded, otherDotsFilter)) {
             // do something here
             console.log("connected");
@@ -80,7 +76,7 @@ function addConnection(dot, color) {
         }
     }
 
-    dot.sprite.on('pointerdown', onDragStart)
+    dot.on('pointerdown', onDragStart)
         .on('pointerup', onDragEnd)
         .on('pointerupoutside', onDragEnd)
         .on('pointermove', onDragMove);
@@ -92,37 +88,39 @@ function createDot(color, radius) {
     redCircle.lineStyle(0);
     redCircle.drawCircle(0, 0, radius);
     redCircle.endFill();
-    let dot = new Dot(redCircle);
-    dot.sprite.zIndex = 1
-    dot.sprite.zOrder = 1
-    dot.sprite.enableSort = true
-    dot.sprite.buttonMode = true;
-    dot.sprite.interactive = true;
+    console.log(Dot);
+    console.log(Dot.fromGraphic);
+    let dot = Dot.fromGraphic(redCircle, app);
+    dot.zIndex = 1
+    dot.zOrder = 1
+    dot.enableSort = true
+    dot.buttonMode = true;
+    dot.interactive = true;
     return dot;
 }
 
 const dotRadius = 26
-const margin = 16
+const margin = 18
 const dotsMeta = {
     1: {
         color: 0xFF0000,
         radius: dotRadius,
-        position: { x: dotRadius + margin, y: dotRadius + margin },
+        position: { x: margin, y: margin },
     },
     2: {
         color: 0x00FF00,
         radius: dotRadius,
-        position: { x: size.width - dotRadius - margin, y: dotRadius + margin },
+        position: { x: size.width - margin - (2 * dotRadius), y: margin },
     },
     3: {
         color: 0x0000FF,
         radius: dotRadius,
-        position: { x: size.width - dotRadius - margin, y: size.height - dotRadius - margin }
+        position: { x: size.width - margin - (2 * dotRadius), y: size.height - (2 * dotRadius) - margin }
     },
     4: {
         color: 0xFF0FF0,
         radius: dotRadius,
-        position: { x: dotRadius + margin, y: size.height - dotRadius - margin }
+        position: { x: margin, y: size.height - (2 * dotRadius) - margin }
     },
 }
 
@@ -131,10 +129,10 @@ for (const [key, value] of Object.entries(dotsMeta)) {
     const color = dotMeta.color
     console.log(dotMeta);
     var dot = createDot(color, dotMeta.radius);
-    dot.sprite.x = dotMeta.position.x
-    dot.sprite.y = dotMeta.position.y
-    console.log("dot.sprite", dot.sprite);
-    app.stage.addChild(dot.sprite)
+    dot.x = dotMeta.position.x
+    dot.y = dotMeta.position.y
+    dot.id = key
+    app.stage.addChild(dot)
     addConnection(dot, color)
     dots.push(dot)
 }
